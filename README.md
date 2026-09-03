@@ -48,7 +48,11 @@ sudo mkinitcpio -P
 
 Edit `/boot/EFI/BOOT/limine.conf` to include `amdgpu.modeset=1 drm.edid_firmware=HDMI-A-0:edid/1920x1080.bin`.
 
-### 5. Reboot — WITHOUT typing `nomodeset`
+
+### 4b. (GRUB) your boot entries should use the same cmdline
+Edit `/etc/default/grub` and add the same parameters to `GRUB_CMDLINE_LINUX_DEFAULT`
+
+---
 
 Pick your newest kernel. You should reach the login screen with hardware acceleration.
 
