@@ -1,0 +1,5 @@
+--- 99-amdgpu-modeset.conf.before	2026-09-03 12:20:50.340531844 -0300
++++ 99-amdgpu-modeset.conf.after	2026-09-03 12:20:50.361532760 -0300
+@@ -0,0 +1,2 @@
++options drm edid_firmware=HDMI-A-0:edid/1920x1080.bin
++options amdgpu modeset=1

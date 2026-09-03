@@ -1,0 +1,33 @@
+--- limine.conf.before	2026-09-03 12:19:30.518704910 -0300
++++ limine.conf.after	2026-09-03 12:19:30.526640132 -0300
+@@ -1,16 +1,22 @@
+ timeout: 5
+ 
+-/Arch Linux (linux)
++/Arch Linux (linux 7.2.2)
+     protocol: efi
+     path: boot():/EFI/Linux/arch-linux.efi
+-    cmdline: root=PARTUUID=5e2b0e55-cc9e-48b5-8acf-84ce7bd4d8d5 zswap.enabled=0 rw rootfstype=btrfs
++    cmdline: root=PARTUUID=5e2b0e55-cc9e-48b5-8acf-84ce7bd4d8d5 zswap.enabled=0 rw rootfstype=btrfs amdgpu.modeset=1 drm.edid_firmware=HDMI-A-0:edid/1920x1080.bin
+ 
+-/Arch Linux (linux-cachyos)
++/Arch Linux (linux-zen 7.2.2)
+     protocol: efi
+-    path: boot():/EFI/Linux/arch-linux-cachyos.efi
+-    cmdline: root=PARTUUID=5e2b0e55-cc9e-48b5-8acf-84ce7bd4d8d5 zswap.enabled=0 rw rootfstype=btrfs
++    path: boot():/EFI/Linux/arch-linux-zen.efi
++    cmdline: root=PARTUUID=5e2b0e55-cc9e-48b5-8acf-84ce7bd4d8d5 zswap.enabled=0 rw rootfstype=btrfs amdgpu.modeset=1 drm.edid_firmware=HDMI-A-0:edid/1920x1080.bin
+ 
+-/Arch Linux (linux-zen)
++/Arch Linux (linux-cachyos 7.2.2)
+     protocol: efi
+-    path: boot():/EFI/Linux/arch-linux-zen.efi
+-    cmdline: root=PARTUUID=5e2b0e55-cc9e-48b5-8acf-84ce7bd4d8d5 zswap.enabled=0 rw rootfstype=btrfs
++    path: boot():/EFI/Linux/arch-linux-cachyos.efi
++    cmdline: root=PARTUUID=5e2b0e55-cc9e-48b5-8acf-84ce7bd4d8d5 zswap.enabled=0 rw rootfstype=btrfs amdgpu.modeset=1 drm.edid_firmware=HDMI-A-0:edid/1920x1080.bin
++
++/Arch Linux (LTS 6.12 - RX580 fallback)
++    protocol: linux
++    path: boot():/vmlinuz-linux-cachyos-lts-lto
++    cmdline: root=PARTUUID=5e2b0e55-cc9e-48b5-8acf-84ce7bd4d8d5 zswap.enabled=0 rw rootfstype=btrfs amdgpu.modeset=1 drm.edid_firmware=HDMI-A-0:edid/1920x1080.bin
++    module_path: boot():/initramfs-linux-cachyos-lts-lto.img

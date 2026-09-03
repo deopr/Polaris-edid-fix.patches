@@ -1,0 +1,5 @@
+--- fixes/system/cmdline.before	2026-09-03 12:19:30.499582528 -0300
++++ fixes/system/cmdline.after	2026-09-03 12:19:30.508691542 -0300
+@@ -1 +1 @@
+-root=PARTUUID=5e2b0e55-cc9e-48b5-8acf-84ce7bd4d8d5 zswap.enabled=0 rw rootfstype=btrfs
++root=PARTUUID=5e2b0e55-cc9e-48b5-8acf-84ce7bd4d8d5 zswap.enabled=0 rw rootfstype=btrfs amdgpu.modeset=1 drm.edid_firmware=HDMI-A-0:edid/1920x1080.bin
