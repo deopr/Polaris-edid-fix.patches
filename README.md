@@ -73,5 +73,3 @@ vulkaninfo --summary                             # deviceName: RADV POLARIS10
   Use whichever shows as `disconnected`. (In this test `HDMI-A-0` applied cleanly even though the port enumerates as `HDMI-A-1`.)
 
 - **Other resolutions:** the standard 1080p EDID is used automatically. For other modes, drop your own file into `/lib/firmware/edid/<name>.bin` and reference `edid/<name>.bin`.
-
-- **Not the cause here:** newer kernel, amdgpu driver, LACT/overdrive. The driver initialized fine — it was purely a missing EDID over HDMI (old monitor).
