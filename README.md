@@ -1,60 +1,63 @@
-# AMD RX 570/580/590 Black Screen on Boot — HDMI Has No EDID
+# AMD RX 470/480/570/580/590 — Black Screen on Boot (HDMI has no EDID)
 
-**Symptom:** black screen (monitor powered on) on normal boot. Only typed `nomodeset` gives a picture, but then video acceleration is disabled (llvmpipe, no Vulkan).
+**Symptom:** monitor powers on but the screen stays black on a normal boot. Only typing `nomodeset` gives a picture — but then video acceleration is dead (llvmpipe, no Vulkan).
 
-**Cause:** your monitor doesn't send a valid **EDID** (the data block the GPU reads to know the panel's resolution). amdgpu then reports the HDMI port as **disconnected**, so Xorg/Wayland find "no connected screen" → black screen.
+**Cause:** your monitor doesn't send a valid **EDID** (the data block the GPU reads to learn the panel's resolution). amdgpu then reports the HDMI port as **disconnected**, so Xorg/Wayland find "no connected screen" → black screen.
 
 `nomodeset` "works" because it skips KMS and reuses the firmware framebuffer — at the cost of acceleration.
 
-**Fix:** force a known EDID onto the HDMI port with one kernel parameter. No extra file needed — the kernel has `1920x1080.bin` built in.
+**Fix:** force a known EDID onto the HDMI port with kernel parameters. No extra firmware file needed — the kernel has `1920x1080.bin` built in.
 
-Verified on Arch/CachyOS, Linux 7.x, Limine + UKI, Gigabyte RX 590 (Polaris10, `1002:67df`).
-
----
-
-## Setup
-
-Update the following to your own values:
-- `<YOUR-PARTUUID>` → your root partition's PARTUUID (`blkid`).
-
-### 1. Kernel cmdline (source for UKI)
-
-```bash
-sudo nano /etc/kernel/cmdline
-```
-
-Make it contain:
-
-```
-root=PARTUUID=<YOUR-PARTUUID> zswap.enabled=0 rw rootfstype=btrfs amdgpu.modeset=1 drm.edid_firmware=HDMI-A-0:edid/1920x1080.bin
-```
-
-### 2. Module options (safety net, in case the param is lost)
-
-```bash
-sudo tee /etc/modprobe.d/99-amdgpu-modeset.conf <<'EOF'
-options drm edid_firmware=HDMI-A-0:edid/1920x1080.bin
-options amdgpu modeset=1
-EOF
-```
-
-### 3. Rebuild initramfs / UKIs so the cmdline is baked in
-
-```bash
-sudo mkinitcpio -P
-```
-
-### 4. (Limine) your boot entries should use the same cmdline
-
-Edit `/boot/EFI/BOOT/limine.conf` to include `amdgpu.modeset=1 drm.edid_firmware=HDMI-A-0:edid/1920x1080.bin`.
-
-
-### 4b. (GRUB) your boot entries should use the same cmdline
-Edit `/etc/default/grub` and add the same parameters to `GRUB_CMDLINE_LINUX_DEFAULT`
+Verified on Arch/CachyOS and Fedora, Linux 7.x, Gigabyte RX 590 (Polaris10, `1002:67df`).
 
 ---
 
-Pick your newest kernel. You should reach the login screen with hardware acceleration.
+## Setup — one command, any distro
+
+```bash
+git clone https://github.com/deopr/Polaris-edid-fix.patches.git
+cd Polaris-edid-fix.patches
+sudo bash setup.sh
+```
+
+`setup.sh` is bootloader-aware. It locates your boot config, appends the two
+kernel parameters (only once — re-runs are safe), writes the module options
+file, and rebuilds initramfs/UKIs with your distro's tool.
+
+| Bootloader / mechanism | Config it updates | Initramfs tool used |
+|---|---|---|
+| GRUB (Debian/Ubuntu/openSUSE/…) | `/etc/default/grub` + `update-grub` / `grub(2)-mkconfig` | `update-initramfs` |
+| GRUB2 (Fedora/RHEL, …) | `grubby --update-kernel=ALL` | `dracut` |
+| systemd-boot | `/boot/loader/entries/*.conf` (appends to `options`) | `dracut` / `mkinitcpio` / `update-initramfs` |
+| Limine | `/boot/limine.conf` / `/boot/EFI/BOOT/limine.conf` | `mkinitcpio` / `dracut` |
+| rEFInd | `/boot/refind_linux.conf` | any |
+| UKI kernel-cmdline (Arch/Fedora UKI) | `/etc/kernel/cmdline` | `mkinitcpio` / `dracut` |
+
+What gets applied everywhere:
+
+```
+/etc/modprobe.d/99-amdgpu-modeset.conf   # safety net, survives param loss
+```
+
+The two parameters injected:
+
+```
+amdgpu.modeset=1   drm.edid_firmware=HDMI-A-0:edid/1920x1080.bin
+```
+
+---
+
+## Manual setup (if the script can't detect your setup)
+
+Add the parameters to your kernel cmdline and rebuild initramfs:
+
+- **GRUB (Debian/Ubuntu):** edit `/etc/default/grub`, add to `GRUB_CMDLINE_LINUX_DEFAULT`, run `sudo update-grub`
+- **GRUB2 (Fedora/RHEL):** `sudo grubby --update-kernel=ALL --args="amdgpu.modeset=1 drm.edid_firmware=HDMI-A-0:edid/1920x1080.bin"`
+- **Arch (systemd-boot):** append to `options ...` in `/boot/loader/entries/*.conf`
+- **Arch/Limine (UKI):** edit `/etc/kernel/cmdline`, then `sudo mkinitcpio -P`
+- **openSUSE:** edit `/etc/default/grub` → `sudo grub2-mkconfig -o /boot/grub2/grub.cfg`
+
+Then run the matching initramfs rebuild if you didn't already: `sudo update-initramfs -u`, `sudo dracut --force`, or `sudo mkinitcpio -P`.
 
 ---
 
@@ -72,8 +75,14 @@ vulkaninfo --summary                             # deviceName: RADV POLARIS10
 
 - **Connector name can differ** (`HDMI-A-0` vs `HDMI-A-1`). Check after a normal boot:
   ```bash
-  for c in /sys/class/drm/card*/card*-HDMI-A-*/status; do echo "$c = $(cat $c)"; done
+  for c in /sys/class/drm/card*/card*-HDMI-A-*/status; do echo "$c = $(cat "$c")"; done
   ```
-  Use whichever shows as `disconnected`. (In this test `HDMI-A-0` applied cleanly even though the port enumerates as `HDMI-A-1`.)
+  Use whichever shows as `disconnected` — and edit it in the top of `setup.sh` (`PARAMS=`) if it isn't `HDMI-A-0`.
 
 - **Other resolutions:** the standard 1080p EDID is used automatically. For other modes, drop your own file into `/lib/firmware/edid/<name>.bin` and reference `edid/<name>.bin`.
+
+- **Distro coverage:** the script detects the bootloader and initramfs tool at runtime, so it's distro-agnostic by design — not a package per distro. Build from source on any distro: Debian/Ubuntu/Fedora/Arch/openSUSE/Void/Alpine/Gentoo all work.
+
+## License
+
+MIT — use, fork, modify freely.
