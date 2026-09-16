@@ -83,6 +83,23 @@ vulkaninfo --summary                             # deviceName: RADV POLARIS10
 
 - **Distro coverage:** the script detects the bootloader and initramfs tool at runtime, so it's distro-agnostic by design — not a package per distro. Build from source on any distro: Debian/Ubuntu/Fedora/Arch/openSUSE/Void/Alpine/Gentoo all work.
 
+## When NOT to use this fix
+
+**RESOLVED / oopsie:** the override works only when your monitor's EDID is
+*genuinely* broken/missing. In my case the `/lib/firmware/edid/1920x1080.bin`
+file was a **corrupt dump**, so the kernel served garbage *instead of* a
+healthy panel EDID → wrong reduced-blanking modes (59.93 Hz) and tearing.
+
+**Fix (both cases):**
+- Monitor EDID **actually broken** → keep this override, but use a **valid**
+  blob (kernel reference `edid/1920x1080.bin`), never a dump of a broken one.
+- Monitor EDID **fine / file was garbage** → remove `drm.edid_firmware` and
+  `video=...` params entirely and reboot.
+
+**Warning:** the kernel's `1920x1080.bin` is **native 60 Hz only** — for
+120/144/180 Hz panels, build `edid/<name>.bin` from your monitor's real native
+timing instead, or you'll get capped at 60 Hz.
+
 ## License
 
 MIT — use, fork, modify freely.
